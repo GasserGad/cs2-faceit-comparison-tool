@@ -4,9 +4,13 @@
   "description": "Head-to-head CS2 player comparison tool built on the Faceit Data API",
   "type": "module",
   "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
   },
   "dependencies": {
     "express": "^4.19.2",
