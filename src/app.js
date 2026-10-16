@@ -136,7 +136,12 @@ export function createApp({ config, compareService, log = () => {} }) {
   // Central error handler: known errors get their safe message, everything
   // else is logged in full and returned as a generic 500.
   app.use(
-    /** @type {import("express").ErrorRequestHandler} */
+    /**
+     * @param {any} err
+     * @param {import("express").Request} _req
+     * @param {import("express").Response} res
+     * @param {import("express").NextFunction} _next
+     */
     (err, _req, res, _next) => {
       if (err instanceof AppError) {
         if (err.retryAfterSeconds) res.setHeader("Retry-After", String(err.retryAfterSeconds));

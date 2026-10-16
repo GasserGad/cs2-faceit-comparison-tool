@@ -13,7 +13,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: NODE_VERSION
-        value: "22"
+        value: "24"
       # Render puts one proxy in front of the app. Trusting exactly one hop
       # gives the rate limiter the real client IP without allowing spoofing.
       - key: TRUST_PROXY
