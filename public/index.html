@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CS2 Head-to-Head</title>
+  <meta name="description" content="Compare two FACEIT CS2 players and see every recent match they played together or against each other.">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <h1>CS2 Head-to-Head</h1>
+    <p class="tagline">Two FACEIT nicknames in. Every recent match they shared, out.</p>
+  </header>
+
+  <main>
+    <form id="compare-form" class="compare-form" novalidate>
+      <label>
+        <span>Player A</span>
+        <input name="a" autocomplete="off" spellcheck="false" required minlength="2" maxlength="32" pattern="[A-Za-z0-9_.\-]{2,32}" placeholder="FACEIT nickname">
+      </label>
+      <span class="vs" aria-hidden="true">vs</span>
+      <label>
+        <span>Player B</span>
+        <input name="b" autocomplete="off" spellcheck="false" required minlength="2" maxlength="32" pattern="[A-Za-z0-9_.\-]{2,32}" placeholder="FACEIT nickname">
+      </label>
+      <button type="submit">Compare</button>
+    </form>
+
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+
+    <section id="results" class="results" hidden>
+      <div class="players">
+        <article class="player" id="player-a"></article>
+        <article class="player" id="player-b"></article>
+      </div>
+
+      <div class="summary" id="summary"></div>
+
+      <h2>Shared matches</h2>
+      <p class="note" id="scanned"></p>
+      <table class="matches">
+        <thead>
+          <tr><th scope="col">Date</th><th scope="col">Relationship</th><th scope="col">Result for player A</th><th scope="col">Competition</th><th scope="col">Room</th></tr>
+        </thead>
+        <tbody id="match-rows"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Not affiliated with or endorsed by FACEIT. Data from the public FACEIT Data API.</p>
+    <nav><a href="/terms">Terms of Use</a> · <a href="/privacy">Privacy Policy</a> · <a href="https://github.com/GasserGad/cs2-faceit-comparison-tool">Source code</a></nav>
+  </footer>
+</body>
+</html>

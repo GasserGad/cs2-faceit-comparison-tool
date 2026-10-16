@@ -1,0 +1,22 @@
+# Render Blueprint: free web service. Set FACEIT_API_KEY in the Render dashboard
+# (it is marked sync: false so it is never stored in this file or in git).
+services:
+  - type: web
+    name: cs2-faceit-comparison-tool
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: node src/server.js
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      # Render puts one proxy in front of the app. Trusting exactly one hop
+      # gives the rate limiter the real client IP without allowing spoofing.
+      - key: TRUST_PROXY
+        value: "1"
+      - key: FACEIT_API_KEY
+        sync: false
