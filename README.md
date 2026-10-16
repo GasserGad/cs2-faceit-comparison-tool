@@ -1,4 +1,4 @@
-# CS2 Head-to-Head
+# CS2 H2H
 
 Compare two FACEIT Counter-Strike 2 players and see every recent match they played **together** or **against each other**, with win/loss records. FACEIT's own site doesn't show this.
 

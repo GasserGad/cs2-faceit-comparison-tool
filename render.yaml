@@ -2,7 +2,7 @@
 # (it is marked sync: false so it is never stored in this file or in git).
 services:
   - type: web
-    name: cs2-faceit-comparison-tool
+    name: cs2-h2h
     runtime: node
     plan: free
     buildCommand: npm ci --omit=dev
