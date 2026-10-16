@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/GasserGad/cs2-faceit-comparison-tool/security/advisories/new
+    about: Please report security problems privately here, never in a public issue.
+  - name: Problems with your FACEIT account or stats
+    url: https://support.faceit.com
+    about: Wrong stats or account issues come from FACEIT itself. Contact FACEIT support.

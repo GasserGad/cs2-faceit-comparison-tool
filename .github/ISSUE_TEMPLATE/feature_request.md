@@ -1,20 +1,18 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: ''
+about: Suggest an idea or improvement
+title: "[Idea]: "
+labels: enhancement
 assignees: ''
-
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+**What problem would this solve?**
+What's missing or annoying right now?
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+**Your idea**
+How would you like it to work?
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+**Anything else you've tried or considered?**
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+**How much would this help you?**
+(Nice to have / I'd use it often / I'd use the tool a lot more because of it)
