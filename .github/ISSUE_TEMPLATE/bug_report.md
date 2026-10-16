@@ -1,38 +1,30 @@
 ---
 name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
+about: Something isn't working the way it should
+title: "[Bug]: "
+labels: bug
 assignees: ''
-
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+**Security problem?** Don't post it here. Report it privately instead: https://github.com/GasserGad/cs2-faceit-comparison-tool/security/advisories/new
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+**What happened?**
+Describe the problem in a sentence or two.
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+**Steps to reproduce**
+1. Go to the home page
+2. Enter nickname A and nickname B
+3. Click Compare
+4. See the problem
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**What did you expect to happen?**
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+**Nicknames you compared (optional)**
+These are public FACEIT nicknames. Only include them if you're comfortable posting them publicly.
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+**Device and browser**
+- Device: (desktop / phone / tablet)
+- Browser: (Chrome, Edge, Firefox, Safari, Opera GX, other)
 
-**Additional context**
-Add any other context about the problem here.
+**Screenshots or error message**
+Drag and drop a screenshot here, or paste any error text shown on the page.
