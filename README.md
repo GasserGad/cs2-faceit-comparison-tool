@@ -1,5 +1,7 @@
 # CS2 H2H
 
+**Live: [cs2-faceit-comparison-tool.onrender.com](https://cs2-faceit-comparison-tool.onrender.com/)**
+
 Compare two FACEIT Counter-Strike 2 players and see every recent match they played **together** or **against each other**, with win/loss records. FACEIT's own site doesn't show this.
 
 Node.js · Express 5 · FACEIT Data API · zero-dependency front-end
