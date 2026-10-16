@@ -92,8 +92,55 @@ main, .site-header, .site-footer {
 .matches .loss { color: var(--loss); }
 .matches a { color: var(--accent); }
 
-.site-footer { padding-top: 48px; padding-bottom: 32px; color: var(--muted); font-size: 0.85rem; }
-.site-footer a { color: var(--muted); }
+.site-footer {
+  position: relative;
+  margin-top: 72px;
+  padding-top: 40px;
+  padding-bottom: 32px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+/* Accent rule that fades out to the sides */
+.site-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent) 20%, var(--border) 60%, transparent);
+}
+.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 32px; }
+.footer-title { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--text); font-weight: 700; font-size: 1.05rem; }
+.brand-mark {
+  display: inline-grid;
+  place-items: center;
+  height: 28px;
+  padding: 0 7px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.footer-credit { margin: 10px 0 14px; }
+.footer-credit strong { color: var(--text); font-weight: 600; }
+.footer-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+.pill:hover, .pill:focus-visible { border-color: var(--accent); color: var(--accent); }
+.footer-col { display: flex; flex-direction: column; gap: 8px; }
+.footer-heading { margin: 0 0 4px; color: var(--text); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+.footer-col a { color: var(--muted); text-decoration: none; width: fit-content; }
+.footer-col a:hover, .footer-col a:focus-visible { color: var(--accent); }
+.footer-fineprint { margin: 32px 0 0; padding-top: 16px; border-top: 1px solid var(--border); font-size: 0.8rem; }
 
 .legal { max-width: 720px; }
 .legal h2 { margin-top: 32px; font-size: 1.15rem; }
@@ -104,6 +151,8 @@ main, .site-header, .site-footer {
   .vs { padding: 0; text-align: center; }
   .players, .summary { grid-template-columns: 1fr; }
   .matches { display: block; overflow-x: auto; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .footer-brand { grid-column: 1 / -1; }
 }
 
 .home-link { color: inherit; text-decoration: none; }
