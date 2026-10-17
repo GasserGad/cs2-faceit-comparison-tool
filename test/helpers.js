@@ -3,6 +3,18 @@
 export const PLAYER_A = { player_id: "aaaaaaaa-0000-0000-0000-000000000001", nickname: "alpha", games: { cs2: { faceit_elo: 2100, skill_level: 10 } } };
 export const PLAYER_B = { player_id: "bbbbbbbb-0000-0000-0000-000000000002", nickname: "bravo", games: { cs2: { faceit_elo: 1800, skill_level: 8 } } };
 
+/** Raw FACEIT search results, deliberately fuzzy and messy. */
+export const SEARCH_ITEMS = [
+  { player_id: "p1", nickname: "s0m", country: "us", avatar: "https://assets.faceit-cdn.net/avatars/p1.jpg", verified: true, games: [{ name: "cs2", skill_level: "4" }] },
+  { player_id: "p2", nickname: "xs1mplex", country: "ua", games: [{ name: "cs2", skill_level: "7" }] },
+  { player_id: "p3", nickname: "s1mpleton", country: "de", avatar: "https://evil.example/x.png", games: [{ name: "cs2", skill_level: "10" }] },
+  { player_id: "p4", nickname: "s1m", country: "gb", games: [{ name: "cs2", skill_level: "0" }] },
+  { player_id: "p5", nickname: "s1mNoLevel", country: "fr", games: [{ name: "cs2", skill_level: "0" }] },
+  { player_id: "p6", nickname: "s1mCsgoOnly", games: [{ name: "csgo", skill_level: "9" }] },
+  { player_id: "p7", nickname: "<script>", games: [{ name: "cs2", skill_level: "5" }] },
+  { player_id: "p8", nickname: "S1MPLETON", games: [{ name: "cs2", skill_level: "3" }] },
+];
+
 /**
  * @param {string} id
  * @param {string[]} faction1
@@ -64,6 +76,9 @@ export function standardFaceit() {
       if (nick === "bravo") return jsonResponse(200, PLAYER_B);
       return jsonResponse(404, { errors: [] });
     }
+    if (path === "/search/players") {
+      return jsonResponse(200, { items: SEARCH_ITEMS });
+    }
     const stats = path.match(/^\/players\/([^/]+)\/stats\/cs2$/);
     if (stats) {
       return jsonResponse(200, { lifetime: { Matches: "500", "Win Rate %": "54", "Average K/D Ratio": "1.2", "Average Headshots %": "48", "Longest Win Streak": "9", Secret: "should-not-leak" } });
@@ -88,6 +103,7 @@ export function testConfig(overrides = {}) {
     trustProxy: false,
     maxMatchesPerPlayer: 200,
     compareRateLimitPerMinute: 100,
+    searchRateLimitPerMinute: 1000,
     globalRateLimitPerMinute: 1000,
     upstreamConcurrency: 4,
     upstreamQueueLimit: 100,

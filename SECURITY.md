@@ -13,7 +13,7 @@ Testing that degrades the live service for other users (load testing, flooding, 
 | Threat | Mitigation |
 | --- | --- |
 | Injection and malformed input | Strict allow-list validation of every query parameter; arrays and nested objects rejected; upstream IDs validated before use in URLs |
-| Cross-site scripting (XSS) | Front-end uses `textContent` only (enforced by lint rule); strict Content Security Policy with no inline scripts or styles |
+| Cross-site scripting (XSS) | Front-end uses `textContent` only (enforced by lint rule); strict Content Security Policy with no inline scripts or styles; player avatars only from FACEIT's CDN, checked on the server and allowed by host in the CSP |
 | Clickjacking | `frame-ancestors 'none'` |
 | Information leakage | Generic error messages; stack traces and upstream details only in server logs; `X-Powered-By` removed; only whitelisted stat fields returned |
 | API key exposure | Key only in environment variables; `.env` git-ignored; gitleaks scan in CI |

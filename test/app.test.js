@@ -5,10 +5,11 @@ import { createApp } from "../src/app.js";
 import { createCompareService } from "../src/compare.js";
 import { createFaceitClient } from "../src/faceitClient.js";
 import { ConcurrencyLimiter } from "../src/limiter.js";
+import { createSearchService } from "../src/search.js";
 import { fakeFetch, jsonResponse, standardFaceit, testConfig } from "./helpers.js";
 
-/** @param {{ fetchImpl?: typeof fetch, config?: object, compareService?: any }} [options] */
-function buildApp({ fetchImpl = standardFaceit(), config = {}, compareService } = {}) {
+/** @param {{ fetchImpl?: typeof fetch, config?: object, compareService?: any, searchService?: any }} [options] */
+function buildApp({ fetchImpl = standardFaceit(), config = {}, compareService, searchService } = {}) {
   const cfg = testConfig(config);
   const faceit = createFaceitClient({
     apiKey: cfg.faceitApiKey,
@@ -20,6 +21,7 @@ function buildApp({ fetchImpl = standardFaceit(), config = {}, compareService } 
   return createApp({
     config: cfg,
     compareService: compareService ?? createCompareService({ faceit, maxMatchesPerPlayer: cfg.maxMatchesPerPlayer }),
+    searchService: searchService ?? createSearchService({ faceit }),
   });
 }
 
@@ -84,6 +86,69 @@ describe("GET /api/compare", () => {
   });
 });
 
+describe("GET /api/search", () => {
+  it("returns ranked, whitelisted suggestions", async () => {
+    const res = await request(buildApp()).get("/api/search?q=s1m").expect(200);
+    assert.deepEqual(
+      res.body.players.map((/** @type {any} */ p) => p.nickname),
+      ["s1m", "s1mpleton", "xs1mplex", "s0m"]
+    );
+    assert.deepEqual(Object.keys(res.body.players[0]).sort(), ["avatar", "country", "nickname", "skillLevel", "verified"]);
+    assert.match(res.headers["cache-control"], /max-age=300/);
+  });
+
+  it("only passes avatars from FACEIT's CDN", async () => {
+    const res = await request(buildApp()).get("/api/search?q=s1m").expect(200);
+    const byName = Object.fromEntries(res.body.players.map((/** @type {any} */ p) => [p.nickname, p]));
+    assert.equal(byName.s0m.avatar, "https://assets.faceit-cdn.net/avatars/p1.jpg");
+    assert.equal(byName.s1mpleton.avatar, null);
+    assert.equal(JSON.stringify(res.body).includes("evil.example"), false);
+  });
+
+  it("does not leak FACEIT player IDs", async () => {
+    const res = await request(buildApp()).get("/api/search?q=s1m").expect(200);
+    assert.equal(JSON.stringify(res.body).includes("player_id"), false);
+  });
+
+  for (const query of ["", "?q=x", "?q=<script>", "?q=a&q=b", `?q=${"a".repeat(33)}`, "?q[$ne]=1"]) {
+    it(`rejects bad input: "${query}"`, async () => {
+      const res = await request(buildApp()).get(`/api/search${query}`).expect(400);
+      assert.equal(res.body.error.code, "bad_request");
+    });
+  }
+
+  it("caches prefixes so repeated typing doesn't cost API quota", async () => {
+    const fetchImpl = standardFaceit();
+    const app = buildApp({ fetchImpl });
+    await request(app).get("/api/search?q=s1m").expect(200);
+    await request(app).get("/api/search?q=S1M").expect(200);
+    assert.equal(fetchImpl.calls.length, 1);
+    assert.equal(fetchImpl.calls[0].url.searchParams.get("game"), "cs2");
+  });
+
+  it("rate limits searches per client", async () => {
+    const app = buildApp({ config: { searchRateLimitPerMinute: 2 } });
+    await request(app).get("/api/search?q=s1m").expect(200);
+    await request(app).get("/api/search?q=s1m").expect(200);
+    const res = await request(app).get("/api/search?q=s1m").expect(429);
+    assert.equal(res.body.error.code, "rate_limited");
+  });
+
+  it("hides upstream details when FACEIT fails", async () => {
+    const res = await request(buildApp({ fetchImpl: fakeFetch(() => jsonResponse(500, { secret: "internal" })) }))
+      .get("/api/search?q=s1m")
+      .expect(502);
+    assert.equal(JSON.stringify(res.body).includes("internal"), false);
+  });
+
+  it("returns an empty list when nothing matches", async () => {
+    const res = await request(buildApp({ fetchImpl: fakeFetch(() => jsonResponse(200, { items: [] })) }))
+      .get("/api/search?q=zzzz")
+      .expect(200);
+    assert.deepEqual(res.body, { players: [] });
+  });
+});
+
 describe("HTTP hardening", () => {
   it("sets security headers and hides the framework", async () => {
     const res = await request(buildApp()).get("/").expect(200);
@@ -92,6 +157,8 @@ describe("HTTP hardening", () => {
     assert.match(res.headers["content-security-policy"], /frame-ancestors 'none'/);
     assert.equal(res.headers["x-content-type-options"], "nosniff");
     assert.equal(res.headers["referrer-policy"], "no-referrer");
+    assert.match(res.headers["content-security-policy"], /img-src 'self' data: https:\/\/assets\.faceit-cdn\.net/);
+    assert.equal(res.headers["cross-origin-embedder-policy"], "credentialless");
     assert.ok(res.headers["x-request-id"]);
   });
 

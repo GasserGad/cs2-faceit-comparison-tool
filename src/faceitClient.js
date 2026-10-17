@@ -13,6 +13,8 @@ import { AppError, upstreamBusy, upstreamFailed } from "./errors.js";
 const BASE_URL = "https://open.faceit.com/data/v4";
 const HISTORY_PAGE_SIZE = 100; // FACEIT's maximum page size for match history
 const GAME = "cs2";
+// Fetch more than we show so re-ranking (exact/prefix first) has material.
+const SEARCH_PAGE_SIZE = 20;
 // FACEIT player and match IDs are UUIDs or "1-<uuid>" style match IDs.
 const SAFE_ID = /^[A-Za-z0-9-]{8,64}$/;
 
@@ -59,6 +61,8 @@ export function createFaceitClient({ apiKey, timeoutMs, limiter, fetchImpl = fet
   const playerCache = new TtlCache({ maxEntries: 2000, ttlMs: 10 * 60_000 });
   const statsCache = new TtlCache({ maxEntries: 2000, ttlMs: 10 * 60_000 });
   const historyCache = new TtlCache({ maxEntries: 1000, ttlMs: 5 * 60_000 });
+  // Search-as-you-type sends many short prefixes; caching them saves quota.
+  const searchCache = new TtlCache({ maxEntries: 2000, ttlMs: 10 * 60_000 });
 
   /**
    * @param {string} path already-encoded path
@@ -122,6 +126,18 @@ export function createFaceitClient({ apiKey, timeoutMs, limiter, fetchImpl = fet
         if (player === null) return null;
         assertSafeId(player.player_id);
         return player;
+      });
+    },
+
+    /**
+     * Fuzzy nickname search for CS2 players (used for suggestions).
+     * @param {string} query validated nickname prefix
+     * @returns {Promise<any[]>} raw FACEIT search items
+     */
+    searchPlayers(query) {
+      return searchCache.getOrLoad(query.toLowerCase(), async () => {
+        const page = await request("/search/players", { nickname: query, game: GAME, offset: 0, limit: SEARCH_PAGE_SIZE });
+        return Array.isArray(page?.items) ? page.items : [];
       });
     },
 

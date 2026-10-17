@@ -17,15 +17,21 @@
 
   <main>
     <form id="compare-form" class="compare-form" novalidate>
-      <label>
-        <span>Player A</span>
-        <input name="a" autocomplete="off" spellcheck="false" required minlength="2" maxlength="32" pattern="[A-Za-z0-9_.\-]{2,32}" placeholder="FACEIT nickname">
-      </label>
+      <div class="field">
+        <label for="player-a-input"><span>Player A</span></label>
+        <div class="combo">
+          <input id="player-a-input" name="a" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggestions-a" autocomplete="off" spellcheck="false" required minlength="2" maxlength="32" pattern="[A-Za-z0-9_.\-]{2,32}" placeholder="FACEIT nickname">
+          <ul id="suggestions-a" class="suggestions" role="listbox" aria-label="Suggested players" hidden></ul>
+        </div>
+      </div>
       <span class="vs" aria-hidden="true">vs</span>
-      <label>
-        <span>Player B</span>
-        <input name="b" autocomplete="off" spellcheck="false" required minlength="2" maxlength="32" pattern="[A-Za-z0-9_.\-]{2,32}" placeholder="FACEIT nickname">
-      </label>
+      <div class="field">
+        <label for="player-b-input"><span>Player B</span></label>
+        <div class="combo">
+          <input id="player-b-input" name="b" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggestions-b" autocomplete="off" spellcheck="false" required minlength="2" maxlength="32" pattern="[A-Za-z0-9_.\-]{2,32}" placeholder="FACEIT nickname">
+          <ul id="suggestions-b" class="suggestions" role="listbox" aria-label="Suggested players" hidden></ul>
+        </div>
+      </div>
       <button type="submit">Compare</button>
     </form>
 

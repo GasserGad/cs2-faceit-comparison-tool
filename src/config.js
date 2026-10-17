@@ -56,6 +56,11 @@ export function loadConfig(env = process.env) {
       min: 1,
       max: 1000,
     }),
+    // Requests per minute per IP on the nickname suggestions endpoint.
+    searchRateLimitPerMinute: intFromEnv(env.SEARCH_RATE_LIMIT_PER_MINUTE, 60, "SEARCH_RATE_LIMIT_PER_MINUTE", {
+      min: 1,
+      max: 1000,
+    }),
     // Requests per minute per IP across the whole site.
     globalRateLimitPerMinute: intFromEnv(env.GLOBAL_RATE_LIMIT_PER_MINUTE, 120, "GLOBAL_RATE_LIMIT_PER_MINUTE", {
       min: 1,

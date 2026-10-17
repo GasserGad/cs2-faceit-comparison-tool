@@ -5,7 +5,8 @@ import { findSharedMatches, summarize } from "../src/compare.js";
 import { loadConfig } from "../src/config.js";
 import { AppError } from "../src/errors.js";
 import { ConcurrencyLimiter } from "../src/limiter.js";
-import { parseCompareQuery, parseNickname } from "../src/validation.js";
+import { toSuggestions } from "../src/search.js";
+import { parseCompareQuery, parseNickname, parseSearchQuery } from "../src/validation.js";
 import { match, PLAYER_A, PLAYER_B } from "./helpers.js";
 
 describe("validation", () => {
@@ -19,6 +20,11 @@ describe("validation", () => {
       assert.throws(() => parseNickname(bad, "a"), (err) => err instanceof AppError && err.status === 400);
     });
   }
+
+  it("validates search queries like nicknames", () => {
+    assert.equal(parseSearchQuery({ q: " s1 " }), "s1");
+    assert.throws(() => parseSearchQuery({ q: "s" }), (err) => err instanceof AppError && err.status === 400);
+  });
 
   it("rejects comparing a player with themselves (case-insensitive)", () => {
     assert.throws(() => parseCompareQuery({ a: "Alpha", b: "alpha" }), /two different players/);
@@ -122,6 +128,39 @@ describe("shared match logic", () => {
   });
 });
 
+describe("search suggestions", () => {
+  /** @param {string} nickname @param {string} [level] @param {object} [extra] */
+  const item = (nickname, level = "5", extra = {}) => ({ nickname, games: [{ name: "cs2", skill_level: level }], ...extra });
+
+  it("ranks exact, then prefix, then contains, then fuzzy, keeping FACEIT order within a rank", () => {
+    const items = [item("a-b"), item("abc"), item("xxab1"), item("ab2"), item("ab"), item("ab3")];
+    assert.deepEqual(toSuggestions(items, "AB", 10).map((s) => s.nickname), ["ab", "abc", "ab2", "ab3", "xxab1", "a-b"]);
+  });
+
+  it("caps the number of results", () => {
+    const items = Array.from({ length: 10 }, (_, i) => item(`ab${i}`));
+    assert.equal(toSuggestions(items, "ab", 6).length, 6);
+  });
+
+  it("normalizes country and level, and drops bad values", () => {
+    const [s] = toSuggestions([item("ab", "11", { country: "usa", verified: "yes" })], "ab", 5);
+    assert.deepEqual(s, { nickname: "ab", avatar: null, country: null, skillLevel: null, verified: false });
+    const [t] = toSuggestions([item("ab", "8", { country: "us", verified: true })], "ab", 5);
+    assert.equal(t.country, "US");
+    assert.equal(t.skillLevel, 8);
+  });
+
+  it("only accepts https avatars on FACEIT's CDN", () => {
+    const avatars = ["http://assets.faceit-cdn.net/a.jpg", "https://assets.faceit-cdn.net.evil.io/a.jpg", "javascript:alert(1)", "https://distribution.faceit-cdn.net/a.png"];
+    const out = toSuggestions(avatars.map((avatar, i) => item(`ab${i}`, "5", { avatar })), "ab", 10);
+    assert.deepEqual(out.map((s) => s.avatar), [null, null, null, "https://distribution.faceit-cdn.net/a.png"]);
+  });
+
+  it("ignores malformed items instead of failing", () => {
+    assert.deepEqual(toSuggestions([null, {}, { nickname: 5 }, { nickname: "ab" }, { nickname: "ab", games: "x" }], "ab", 5), []);
+  });
+});
+
 describe("config", () => {
   it("requires an API key in production", () => {
     assert.throws(() => loadConfig({ NODE_ENV: "production" }), /FACEIT_API_KEY/);
@@ -135,5 +174,10 @@ describe("config", () => {
   it("does not trust proxy headers unless told to", () => {
     assert.equal(loadConfig({}).trustProxy, false);
     assert.equal(loadConfig({ TRUST_PROXY: "1" }).trustProxy, 1);
+  });
+
+  it("has a separate search rate limit", () => {
+    assert.equal(loadConfig({}).searchRateLimitPerMinute, 60);
+    assert.throws(() => loadConfig({ SEARCH_RATE_LIMIT_PER_MINUTE: "0" }), /SEARCH_RATE_LIMIT_PER_MINUTE/);
   });
 });
