@@ -24,6 +24,15 @@ export function parseNickname(value, label) {
 }
 
 /**
+ * Query for nickname suggestions: the same rules as a full nickname.
+ * @param {Record<string, unknown>} query
+ * @returns {string}
+ */
+export function parseSearchQuery(query) {
+  return parseNickname(query.q, "q");
+}
+
+/**
  * @param {Record<string, unknown>} query
  * @returns {{ a: string, b: string }}
  */

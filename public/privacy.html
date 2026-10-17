@@ -18,7 +18,8 @@
 
     <h2>What we process</h2>
     <ul>
-      <li><strong>The nicknames you search.</strong> They are sent to the FACEIT Data API to look up public player data. Search results are kept in server memory for up to 10 minutes so repeat searches are faster, then discarded.</li>
+      <li><strong>The nicknames you search.</strong> They are sent to the FACEIT Data API to look up public player data. Search results are kept in server memory for up to 10 minutes so repeat searches are faster, then discarded. While you type, partial nicknames are also sent to FACEIT's player search to show suggestions.</li>
+      <li><strong>Player pictures.</strong> Suggestions show players' FACEIT profile pictures, which your browser loads directly from FACEIT's image servers. Those servers see your IP address, like any website image.</li>
       <li><strong>Your IP address.</strong> It is used in memory to enforce rate limits (to protect the Service from abuse) and is forgotten after about a minute. Our own logs do not record IP addresses or what you searched.</li>
       <li><strong>Basic request logs.</strong> Our logs record the time, page path, response status and duration of each request, to keep the Service running and fix errors.</li>
     </ul>

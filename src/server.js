@@ -5,6 +5,7 @@ import { loadConfig } from "./config.js";
 import { createFaceitClient } from "./faceitClient.js";
 import { ConcurrencyLimiter } from "./limiter.js";
 import { createLogger } from "./logger.js";
+import { createSearchService } from "./search.js";
 
 const log = createLogger({ level: process.env.LOG_LEVEL === "debug" ? "debug" : "info" });
 
@@ -17,7 +18,7 @@ try {
 }
 
 if (!config.faceitApiKey) {
-  log("warn", "FACEIT_API_KEY is not set; /api/compare will return 503 until it is");
+  log("warn", "FACEIT_API_KEY is not set; /api/compare and /api/search will return 503 until it is");
 }
 
 const limiter = new ConcurrencyLimiter({
@@ -31,7 +32,8 @@ const faceit = createFaceitClient({
   log,
 });
 const compareService = createCompareService({ faceit, maxMatchesPerPlayer: config.maxMatchesPerPlayer });
-const app = createApp({ config, compareService, log });
+const searchService = createSearchService({ faceit });
+const app = createApp({ config, compareService, searchService, log });
 
 const server = app.listen(config.port, () => {
   log("info", "server listening", { port: config.port, env: config.nodeEnv });

@@ -149,3 +149,167 @@ form.addEventListener("submit", async (event) => {
     button.disabled = false;
   }
 });
+
+// ---------------------------------------------------------------------------
+// Nickname suggestions while typing (ARIA 1.2 combobox pattern).
+// Requests are debounced, stale ones are cancelled, and results are cached
+// for the page session, so typing doesn't flood the server. Everything is
+// rendered with textContent; avatar URLs were already checked by the server.
+
+const SUGGEST_DELAY_MS = 250;
+/** @type {Map<string, any[]>} */
+const suggestionCache = new Map();
+
+/** @param {HTMLInputElement} input @param {HTMLUListElement} list */
+function attachSuggestions(input, list) {
+  /** @type {any[]} */
+  let players = [];
+  let active = -1;
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
+  let timer;
+  /** @type {AbortController | undefined} */
+  let inFlight;
+
+  function close() {
+    list.hidden = true;
+    list.replaceChildren();
+    input.setAttribute("aria-expanded", "false");
+    input.removeAttribute("aria-activedescendant");
+    players = [];
+    active = -1;
+  }
+
+  /** @param {number} index */
+  function setActive(index) {
+    const options = list.querySelectorAll("[role=option]");
+    options.forEach((option, i) => option.setAttribute("aria-selected", String(i === index)));
+    active = index;
+    if (index >= 0) {
+      input.setAttribute("aria-activedescendant", options.item(index).id);
+      options.item(index).scrollIntoView({ block: "nearest" });
+    } else {
+      input.removeAttribute("aria-activedescendant");
+    }
+  }
+
+  /** @param {number} index */
+  function choose(index) {
+    const player = players.at(index);
+    if (!player) return;
+    input.value = player.nickname;
+    close();
+    input.focus();
+  }
+
+  /** First letter underneath; the picture covers it once (and if) it loads. @param {any} player */
+  function avatarFor(player) {
+    const avatar = el("span", player.nickname.charAt(0).toUpperCase(), "avatar");
+    avatar.setAttribute("aria-hidden", "true");
+    if (typeof player.avatar === "string" && player.avatar.startsWith("https://")) {
+      const img = /** @type {HTMLImageElement} */ (el("img"));
+      img.alt = "";
+      img.decoding = "async";
+      img.referrerPolicy = "no-referrer";
+      img.addEventListener("error", () => img.remove(), { once: true });
+      img.src = player.avatar;
+      avatar.append(img);
+    }
+    return avatar;
+  }
+
+  /** @param {any[]} results */
+  function render(results) {
+    players = results.filter((p) => typeof p?.nickname === "string" && NICKNAME.test(p.nickname));
+    list.replaceChildren();
+    active = -1;
+    if (players.length === 0 || document.activeElement !== input) {
+      close();
+      return;
+    }
+    players.forEach((player, i) => {
+      const option = el("li", undefined, "suggestion");
+      option.id = `${list.id}-${i}`;
+      option.setAttribute("role", "option");
+      option.setAttribute("aria-selected", "false");
+      const details = [player.skillLevel ? `Level ${player.skillLevel}` : "Unranked", player.country].filter(Boolean).join(" · ");
+      const text = el("span", undefined, "suggestion-text");
+      text.append(el("span", player.nickname, "suggestion-name"), el("span", details, "suggestion-meta"));
+      option.append(avatarFor(player), text);
+      // pointerdown + preventDefault keeps focus in the input (no blur/close race).
+      option.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        choose(i);
+      });
+      list.append(option);
+    });
+    list.hidden = false;
+    input.setAttribute("aria-expanded", "true");
+  }
+
+  async function lookup() {
+    const query = input.value.trim();
+    if (!NICKNAME.test(query)) {
+      close();
+      return;
+    }
+    const key = query.toLowerCase();
+    const cached = suggestionCache.get(key);
+    if (cached) {
+      render(cached);
+      return;
+    }
+    inFlight?.abort();
+    inFlight = new AbortController();
+    try {
+      const res = await fetch(`/api/search?${new URLSearchParams({ q: query })}`, {
+        headers: { Accept: "application/json" },
+        signal: inFlight.signal,
+      });
+      if (!res.ok) {
+        close(); // rate limited or FACEIT down: typing still works without suggestions
+        return;
+      }
+      const body = await res.json();
+      const results = Array.isArray(body?.players) ? body.players : [];
+      if (suggestionCache.size > 200) suggestionCache.clear();
+      suggestionCache.set(key, results);
+      if (input.value.trim().toLowerCase() === key) render(results);
+    } catch (err) {
+      if (!(err instanceof DOMException && err.name === "AbortError")) close();
+    }
+  }
+
+  input.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(lookup, SUGGEST_DELAY_MS);
+  });
+
+  input.addEventListener("keydown", (event) => {
+    const open = !list.hidden && players.length > 0;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (open) setActive((active + 1) % players.length);
+      else lookup();
+    } else if (event.key === "ArrowUp" && open) {
+      event.preventDefault();
+      setActive(active <= 0 ? players.length - 1 : active - 1);
+    } else if (event.key === "Enter" && open && active >= 0) {
+      event.preventDefault(); // pick the suggestion instead of submitting
+      choose(active);
+    } else if (event.key === "Escape" && open) {
+      event.preventDefault();
+      close();
+    }
+  });
+
+  input.addEventListener("blur", () => {
+    clearTimeout(timer);
+    close();
+  });
+}
+
+for (const name of ["a", "b"]) {
+  const input = /** @type {HTMLInputElement} */ (form.elements.namedItem(name));
+  const list = /** @type {HTMLUListElement} */ (document.getElementById(`suggestions-${name}`));
+  if (input && list) attachSuggestions(input, list);
+}

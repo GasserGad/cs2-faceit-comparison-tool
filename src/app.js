@@ -5,7 +5,8 @@ import express from "express";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { AppError } from "./errors.js";
-import { parseCompareQuery } from "./validation.js";
+import { AVATAR_HOSTS } from "./search.js";
+import { parseCompareQuery, parseSearchQuery } from "./validation.js";
 
 const PUBLIC_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
 const MAX_URL_LENGTH = 512;
@@ -14,10 +15,11 @@ const MAX_URL_LENGTH = 512;
  * @param {{
  *   config: import("./config.js").Config,
  *   compareService: ReturnType<typeof import("./compare.js").createCompareService>,
+ *   searchService: ReturnType<typeof import("./search.js").createSearchService>,
  *   log?: (level: string, message: string, fields?: object) => void,
  * }} deps
  */
-export function createApp({ config, compareService, log = () => {} }) {
+export function createApp({ config, compareService, searchService, log = () => {} }) {
   const app = express();
 
   app.disable("x-powered-by");
@@ -59,7 +61,8 @@ export function createApp({ config, compareService, log = () => {} }) {
           defaultSrc: ["'self'"],
           scriptSrc: ["'self'"],
           styleSrc: ["'self'"],
-          imgSrc: ["'self'", "data:"],
+          // Player avatars in the suggestions come from FACEIT's CDN only.
+          imgSrc: ["'self'", "data:", ...AVATAR_HOSTS.map((host) => `https://${host}`)],
           fontSrc: ["'self'"],
           connectSrc: ["'self'"],
           objectSrc: ["'none'"],
@@ -70,7 +73,9 @@ export function createApp({ config, compareService, log = () => {} }) {
         },
       },
       strictTransportSecurity: config.isProduction ? { maxAge: 31536000, includeSubDomains: true } : false,
-      crossOriginEmbedderPolicy: true,
+      // "credentialless" still isolates the page but lets FACEIT avatars load
+      // (they are fetched without cookies and don't send CORP headers).
+      crossOriginEmbedderPolicy: { policy: "credentialless" },
       referrerPolicy: { policy: "no-referrer" },
     })
   );
@@ -114,6 +119,23 @@ export function createApp({ config, compareService, log = () => {} }) {
     const result = await compareService.compare(a, b);
     res.setHeader("Cache-Control", "private, max-age=60");
     res.json(result);
+  });
+
+  // Suggestions fire while typing (debounced in the browser), so they get their
+  // own limit; results are cached server-side per prefix.
+  const searchLimiter = rateLimit({
+    windowMs: 60_000,
+    limit: config.searchRateLimitPerMinute,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    handler: tooMany("Too many searches. Please slow down."),
+  });
+
+  app.get("/api/search", searchLimiter, async (req, res) => {
+    const q = parseSearchQuery(req.query);
+    const players = await searchService.search(q);
+    res.setHeader("Cache-Control", "private, max-age=300");
+    res.json({ players });
   });
 
   app.use("/api", (_req, res) => {

@@ -49,6 +49,53 @@ main, .site-header, .site-footer {
   color: var(--text);
   font-size: 1rem;
 }
+/* Nickname suggestions dropdown */
+.combo { position: relative; }
+.suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+.suggestion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.suggestion:hover, .suggestion[aria-selected="true"] { background: var(--border); }
+.suggestion[aria-selected="true"] { outline: 1px solid var(--accent); }
+.avatar {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.suggestion-text { display: flex; flex-direction: column; min-width: 0; }
+.suggestion-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.suggestion-meta { color: var(--muted); font-size: 0.8rem; }
+
 .compare-form input:focus-visible, .compare-form button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .vs { color: var(--muted); padding-bottom: 10px; font-weight: 600; }
 .compare-form button {

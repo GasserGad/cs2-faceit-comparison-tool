@@ -10,11 +10,16 @@ Node.js · Express 5 · FACEIT Data API · zero-dependency front-end
 
 ## Features
 
+- Nickname suggestions while you type, with avatar, level and country (keyboard accessible)
 - Lifetime stats side by side: Elo, level, K/D, win rate, headshot %
 - Shared-match finder across each player's recent history (200 matches each by default, paged from the API)
 - Teammate record and head-to-head record
 - Plain, fast UI with links to each FACEIT match room
 - Terms of Use and Privacy Policy pages
+
+## Nickname suggestions
+
+Typing two or more characters shows up to six matching CS2 players. FACEIT's search is fuzzy, so the server re-ranks results (exact match, then names starting with what you typed, then names containing it), drops players with no CS2 level, and returns only nickname, avatar, country, level and verified status. Avatar URLs are only passed through from FACEIT's image CDN, which is the only outside image source the Content Security Policy allows. Each prefix is cached for 10 minutes on the server and for the page session in the browser.
 
 ## How it works
 
@@ -24,6 +29,7 @@ Browser ──► Express app ──► FACEIT Data API
              ├─ validation (allow-list)       src/validation.js
              ├─ rate limits (per IP)          src/app.js
              ├─ comparison logic              src/compare.js
+             ├─ nickname suggestions          src/search.js
              ├─ FACEIT client                 src/faceitClient.js
              │    ├─ timeouts + one retry on 429/5xx
              │    ├─ concurrency limiter      src/limiter.js
@@ -43,12 +49,12 @@ cp .env.example .env      # then put your FACEIT_API_KEY in .env
 npm run dev               # http://localhost:3000
 ```
 
-API: `GET /api/compare?a=<nickname>&b=<nickname>` · Health: `GET /healthz`
+API: `GET /api/compare?a=<nickname>&b=<nickname>` · `GET /api/search?q=<partial nickname>` · Health: `GET /healthz`
 
 ## Tests and checks
 
 ```bash
-npm test            # 54 tests, FACEIT API mocked (no key or network needed)
+npm test            # 74 tests, FACEIT API mocked (no key or network needed)
 npm run lint        # ESLint + security plugin + XSS rules for the front-end
 npm run typecheck   # TypeScript checks the JSDoc-typed source
 npm run check       # all of the above
@@ -69,7 +75,7 @@ See [SECURITY.md](SECURITY.md) for the full threat table and how to report a vul
 
 Layers inside the app:
 
-1. **Per-IP rate limits:** 120 requests/minute site-wide, 10 comparisons/minute
+1. **Per-IP rate limits:** 120 requests/minute site-wide, 10 comparisons/minute, 60 suggestion lookups/minute (the browser also waits for a pause in typing and cancels stale lookups)
 2. **Load shedding:** at most 4 FACEIT calls run at once, 100 may wait, and the rest get an immediate `503` with `Retry-After` instead of piling up
 3. **Caching:** repeat lookups don't hit FACEIT, which protects the API key's quota
 4. **Timeouts:** 10 s for headers, 30 s per request, 8 s per FACEIT call (blunts slowloris-style attacks)
