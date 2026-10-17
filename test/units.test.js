@@ -129,8 +129,8 @@ describe("shared match logic", () => {
 });
 
 describe("search suggestions", () => {
-  /** @param {string} nickname @param {string} [level] @param {object} [extra] */
-  const item = (nickname, level = "5", extra = {}) => ({ nickname, games: [{ name: "cs2", skill_level: level }], ...extra });
+  /** @param {string} nickname @param {object} [extra] */
+  const item = (nickname, extra = {}) => ({ nickname, games: [{ name: "cs2", skill_level: "0" }], ...extra });
 
   it("ranks exact, then prefix, then contains, then fuzzy, keeping FACEIT order within a rank", () => {
     const items = [item("a-b"), item("abc"), item("xxab1"), item("ab2"), item("ab"), item("ab3")];
@@ -142,17 +142,26 @@ describe("search suggestions", () => {
     assert.equal(toSuggestions(items, "ab", 6).length, 6);
   });
 
-  it("normalizes country and level, and drops bad values", () => {
-    const [s] = toSuggestions([item("ab", "11", { country: "usa", verified: "yes" })], "ab", 5);
-    assert.deepEqual(s, { nickname: "ab", avatar: null, country: null, skillLevel: null, verified: false });
-    const [t] = toSuggestions([item("ab", "8", { country: "us", verified: true })], "ab", 5);
+  it("normalizes country and drops bad values", () => {
+    const [s] = toSuggestions([item("ab", { country: "usa", verified: "yes" })], "ab", 5);
+    assert.deepEqual(s, { nickname: "ab", avatar: null, country: null, verified: false });
+    const [t] = toSuggestions([item("ab", { country: "us", verified: true })], "ab", 5);
     assert.equal(t.country, "US");
-    assert.equal(t.skillLevel, 8);
+    assert.equal(t.verified, true);
+  });
+
+  it("keeps partial matches even though FACEIT search reports level 0 for everyone", () => {
+    const items = [item("high666"), item("high_03"), item("420high"), item("High07")];
+    assert.deepEqual(toSuggestions(items, "high", 6).map((s) => s.nickname), ["high666", "high_03", "High07", "420high"]);
+  });
+
+  it("drops players without a CS2 profile", () => {
+    assert.deepEqual(toSuggestions([{ nickname: "ab1", games: [{ name: "csgo", skill_level: "9" }] }], "ab", 5), []);
   });
 
   it("only accepts https avatars on FACEIT's CDN", () => {
     const avatars = ["http://assets.faceit-cdn.net/a.jpg", "https://assets.faceit-cdn.net.evil.io/a.jpg", "javascript:alert(1)", "https://distribution.faceit-cdn.net/a.png"];
-    const out = toSuggestions(avatars.map((avatar, i) => item(`ab${i}`, "5", { avatar })), "ab", 10);
+    const out = toSuggestions(avatars.map((avatar, i) => item(`ab${i}`, { avatar })), "ab", 10);
     assert.deepEqual(out.map((s) => s.avatar), [null, null, null, "https://distribution.faceit-cdn.net/a.png"]);
   });
 

@@ -91,9 +91,9 @@ describe("GET /api/search", () => {
     const res = await request(buildApp()).get("/api/search?q=s1m").expect(200);
     assert.deepEqual(
       res.body.players.map((/** @type {any} */ p) => p.nickname),
-      ["s1m", "s1mpleton", "xs1mplex", "s0m"]
+      ["s1m", "s1mpleton", "s1mNoLevel", "xs1mplex", "s0m"]
     );
-    assert.deepEqual(Object.keys(res.body.players[0]).sort(), ["avatar", "country", "nickname", "skillLevel", "verified"]);
+    assert.deepEqual(Object.keys(res.body.players[0]).sort(), ["avatar", "country", "nickname", "verified"]);
     assert.match(res.headers["cache-control"], /max-age=300/);
   });
 

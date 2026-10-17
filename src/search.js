@@ -4,6 +4,9 @@
 // re-ranked here: exact match, then names starting with the query, then names
 // containing it, then the rest. Only a small whitelisted set of fields leaves
 // the server, and avatar URLs are only passed through from FACEIT's CDN.
+//
+// The search endpoint reports every player's skill level as 0, so levels are
+// neither shown nor used for filtering; the full comparison shows real levels.
 
 const NICKNAME = /^[A-Za-z0-9_.-]{2,32}$/;
 const COUNTRY = /^[a-z]{2}$/i;
@@ -16,7 +19,6 @@ export const AVATAR_HOSTS = Object.freeze(["assets.faceit-cdn.net", "distributio
  * @property {string} nickname
  * @property {string | null} avatar
  * @property {string | null} country two-letter code, upper case
- * @property {number | null} skillLevel FACEIT level 1-10
  * @property {boolean} verified
  */
 
@@ -31,12 +33,6 @@ function safeAvatar(value) {
   }
 }
 
-/** @param {unknown} value */
-function skillLevel(value) {
-  const level = Number(value);
-  return Number.isInteger(level) && level >= 1 && level <= 10 ? level : null;
-}
-
 /** @param {string} nickname @param {string} query lower-cased */
 function rank(nickname, query) {
   const name = nickname.toLowerCase();
@@ -48,7 +44,7 @@ function rank(nickname, query) {
 
 /**
  * Turns raw FACEIT search items into ranked, whitelisted suggestions.
- * Players without a CS2 level are dropped unless they are an exact match.
+ * Players without a CS2 profile are dropped.
  * @param {any[]} items
  * @param {string} query
  * @param {number} maxResults
@@ -66,18 +62,14 @@ export function toSuggestions(items, query, maxResults) {
     if (seen.has(nickname.toLowerCase())) return;
     const cs2 = Array.isArray(item.games) ? item.games.find((/** @type {any} */ g) => g?.name === "cs2") : undefined;
     if (!cs2) return;
-    const level = skillLevel(cs2.skill_level);
-    const r = rank(nickname, q);
-    if (level === null && r !== 0) return;
     seen.add(nickname.toLowerCase());
     ranked.push({
-      rank: r,
+      rank: rank(nickname, q),
       index,
       suggestion: {
         nickname,
         avatar: safeAvatar(item.avatar),
         country: typeof item.country === "string" && COUNTRY.test(item.country) ? item.country.toUpperCase() : null,
-        skillLevel: level,
         verified: item.verified === true,
       },
     });

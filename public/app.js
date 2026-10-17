@@ -231,7 +231,7 @@ function attachSuggestions(input, list) {
       option.id = `${list.id}-${i}`;
       option.setAttribute("role", "option");
       option.setAttribute("aria-selected", "false");
-      const details = [player.skillLevel ? `Level ${player.skillLevel}` : "Unranked", player.country].filter(Boolean).join(" · ");
+      const details = [player.country, player.verified ? "Verified" : null].filter(Boolean).join(" · ") || "FACEIT player";
       const text = el("span", undefined, "suggestion-text");
       text.append(el("span", player.nickname, "suggestion-name"), el("span", details, "suggestion-meta"));
       option.append(avatarFor(player), text);
