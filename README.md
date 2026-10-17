@@ -1,6 +1,6 @@
 # CS2 H2H
 
-**Live: [cs2-faceit-comparison-tool.onrender.com](https://cs2-faceit-comparison-tool.onrender.com/)**
+**Live: [h2h.gassergad.com](https://h2h.gassergad.com/)**
 
 Compare two FACEIT Counter-Strike 2 players and see every recent match they played **together** or **against each other**, with win/loss records. FACEIT's own site doesn't show this.
 
