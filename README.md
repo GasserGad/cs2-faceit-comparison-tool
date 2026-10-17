@@ -10,7 +10,7 @@ Node.js · Express 5 · FACEIT Data API · zero-dependency front-end
 
 ## Features
 
-- Nickname suggestions while you type, with avatar, level and country (keyboard accessible)
+- Nickname suggestions while you type, with avatar and country (keyboard accessible)
 - Lifetime stats side by side: Elo, level, K/D, win rate, headshot %
 - Shared-match finder across each player's recent history (200 matches each by default, paged from the API)
 - Teammate record and head-to-head record
@@ -19,7 +19,7 @@ Node.js · Express 5 · FACEIT Data API · zero-dependency front-end
 
 ## Nickname suggestions
 
-Typing two or more characters shows up to six matching CS2 players. FACEIT's search is fuzzy, so the server re-ranks results (exact match, then names starting with what you typed, then names containing it), drops players with no CS2 level, and returns only nickname, avatar, country, level and verified status. Avatar URLs are only passed through from FACEIT's image CDN, which is the only outside image source the Content Security Policy allows. Each prefix is cached for 10 minutes on the server and for the page session in the browser.
+Typing two or more characters shows up to six matching CS2 players. FACEIT's search is fuzzy, so the server re-ranks results (exact match, then names starting with what you typed, then names containing it), drops players without a CS2 profile, and returns only nickname, avatar, country and verified status. FACEIT's search reports every player's level as 0, so levels only appear in the full comparison. Avatar URLs are only passed through from FACEIT's image CDN, which is the only outside image source the Content Security Policy allows. Each prefix is cached for 10 minutes on the server and for the page session in the browser.
 
 ## How it works
 
@@ -54,7 +54,7 @@ API: `GET /api/compare?a=<nickname>&b=<nickname>` · `GET /api/search?q=<partial
 ## Tests and checks
 
 ```bash
-npm test            # 74 tests, FACEIT API mocked (no key or network needed)
+npm test            # 76 tests, FACEIT API mocked (no key or network needed)
 npm run lint        # ESLint + security plugin + XSS rules for the front-end
 npm run typecheck   # TypeScript checks the JSDoc-typed source
 npm run check       # all of the above
